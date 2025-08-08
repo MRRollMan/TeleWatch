@@ -1,0 +1,6 @@
+.venv/
+.idea/
+config.json
+sessions/
+*.session
+db.sqlite3*

@@ -1,0 +1,11 @@
+{
+  "app_id": "1234567",
+  "app_hash": "abcdef1234567890abcdef1234567890",
+  "bots": [
+    {"name": "first_bot", "token":  "123456789:ABCDEFghijklmnopqrstuvwxyz12345678"}
+  ],
+  "users": [
+    {"name": "first_account", "phone": "+000000000000", "password": "abc123"},
+    {"name": "second_account", "phone": "+000000000000", "password": "abc123"}
+  ]
+}
