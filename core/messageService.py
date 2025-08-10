@@ -18,7 +18,7 @@ class MessageService:
         file = await FileService.download_message_media(client, message)
         chat = await client.db.get_chat_by_id(user, event.chat_id)
         caption = "🔥\n" + message.message
-        await client.send_file(user.forum_id, file, caption=caption, reply_to=chat.topic_id)
+        await client.bot.send_file(user.forum_id, file, caption=caption, reply_to=chat.topic_id)
 
     @staticmethod
     async def handle_message(client: "Client", event):

@@ -3,11 +3,11 @@ import logging
 from itertools import cycle
 
 from telethon.errors import AccessTokenInvalidError
-from telethon.tl.types import Channel
 
 from client import Client
 from config import Config
 from core.messageService import MessageService
+from core.botService import BotService
 from database import Database
 from events import get_events
 from telethon.tl import functions
@@ -54,7 +54,12 @@ class TeleWatch:
             client = await self.init_client(user)
             if not await self.db.has_user(await client.get_id()):
                 await init_user_data(client, self.db)
+            await client.configure()
+
             self.clients.append(client)
+            for bot in self.bots:
+                if not await BotService.in_user_forum(client, bot):
+                    await BotService.add_bot_to_forum(client, bot)
 
     async def init_client(self, user: dict) -> Client:
         session_name: str = user.get("name")
@@ -87,6 +92,8 @@ class TeleWatch:
                 continue
 
             self.bots.append(bot)
+        if not self.bots:
+            raise ValueError("No valid bots configured. Please check your configuration file.")
         self.__bots = cycle(self.bots)
 
     @property
@@ -108,8 +115,8 @@ class TeleWatch:
         logging.info("TeleWatch stopped successfully.")
 
     async def _start(self):
-        await self.init_users()
         await self.init_bots()
+        await self.init_users()
         for client in self.clients:
             await client.disconnected
 
@@ -121,3 +128,4 @@ class TeleWatch:
         except KeyboardInterrupt:
             logging.info("Stopping TeleWatch...")
             self._stop()
+

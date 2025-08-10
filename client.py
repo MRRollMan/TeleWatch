@@ -15,7 +15,7 @@ class Client(TelegramClient):
         session = f"sessions/{session}"
         super().__init__(session, *args, **kwargs)
         self.telewatch = telewatch
-        self.__client_tg_id = None
+        self.__me = None
 
     @property
     def db(self):
@@ -25,10 +25,14 @@ class Client(TelegramClient):
     def bot(self):
         return self.telewatch.bot
 
+    @property
+    async def me(self):
+        if self.__me is None:
+            self.__me = await self.get_me()
+        return self.__me
+
     async def get_id(self):
-        if self.__client_tg_id is None:
-            self.__client_tg_id = (await self.get_me()).id
-        return self.__client_tg_id
+        return (await self.me).id
 
     async def configure(self):
         await self.init_dialogs()
@@ -38,5 +42,8 @@ class Client(TelegramClient):
         update: types.Updates = await self(functions.channels.CreateForumTopicRequest(channel_id, title))
         return update.updates[0].id
 
+    async def add_chat_user(self, chat_id, user):
+        return await self(functions.channels.InviteToChannelRequest(chat_id, [user]))
+
     async def init_dialogs(self):
-        await self.iter_dialogs(1).collect()
+        await self.get_dialogs()

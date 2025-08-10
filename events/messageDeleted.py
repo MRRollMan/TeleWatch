@@ -22,6 +22,6 @@ async def message_deleted_handler(event: events.messagedeleted.MessageDeleted.Ev
             msg = await db.get_message(user, d_id)
             print(msg, "2")
         if msg is not None:
-            await event.client.send_message(user.forum_id,
-                                            f"🗑: \n{msg.text}",
-                                            reply_to=msg.chat.topic_id)
+            await event.client.bot.send_message(user.forum_id,
+                                                f"🗑: \n{msg.text}",
+                                                reply_to=msg.chat.topic_id)
