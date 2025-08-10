@@ -1,3 +1,5 @@
+import asyncio
+
 from telethon import TelegramClient
 
 from telethon.tl import types, functions
@@ -14,6 +16,7 @@ class Client(TelegramClient):
         super().__init__(session, *args, **kwargs)
         self.telewatch = telewatch
         self.__me = None
+        self.lock = asyncio.Lock()
 
     @property
     def db(self):

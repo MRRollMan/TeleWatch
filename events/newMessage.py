@@ -25,11 +25,12 @@ async def new_message_handler(event: events.newmessage.NewMessage.Event):
     chat_id = event.chat_id
     chat_obj = await client.get_entity(chat_id)
     fullname = f"{chat_obj.first_name} {chat_obj.last_name}" if chat_obj.last_name is not None else chat_obj.first_name
-    if not await db.has_chat(user, chat_id):
-        topic_id = await client.create_topic(user.forum_id, fullname)
-        chat = (await db.add_chat(user, chat_id, topic_id))[0]
-    else:
-        chat = await db.get_chat_by_id(user, chat_id)
+    async with client.lock:
+        if not await db.has_chat(user, chat_id):
+            topic_id = await client.create_topic(user.forum_id, fullname)
+            chat = (await db.add_chat(user, chat_id, topic_id))[0]
+        else:
+            chat = await db.get_chat_by_id(user, chat_id)
 
     if message.media and message.media.ttl_seconds:
         await MessageService.handle_onetime_message(client, event)
