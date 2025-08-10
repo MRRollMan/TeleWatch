@@ -1,13 +1,11 @@
-from io import BytesIO
-
 from telethon import events
-from telethon.tl.types import MessageMediaPhoto
-from telethon.types import Message, PeerChannel, PeerChat
+from telethon.types import Message
 
 from core.messageService import MessageService
 from database import Database
 
 from client import Client
+
 
 # TODO: Refactor this to use a more structured event system
 @events.register(events.NewMessage(outgoing=False))
@@ -17,7 +15,6 @@ async def new_message_handler(event: events.newmessage.NewMessage.Event):
     client: Client = event.client
     user_id = await client.get_id()
     user = await db.get_user_by_id(user_id)
-    # print(event.is_private, event.is_group, event.is_channel)
     if user.ignore_users & event.is_private:
         return
     if user.ignore_groups & event.is_group:

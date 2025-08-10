@@ -52,9 +52,10 @@ class TeleWatch:
     async def init_users(self):
         for user in Config.get_users():
             client = await self.init_client(user)
-            if not await self.db.has_user(await client.get_id()):
+            has_user = await self.db.has_user(await client.get_id())
+            if not has_user:
                 await init_user_data(client, self.db)
-            await client.configure()
+            await client.configure(has_user)
 
             self.clients.append(client)
             for bot in self.bots:
@@ -68,10 +69,9 @@ class TeleWatch:
         if not session_name or not phone:
             raise ValueError("User configuration must contain 'name' and 'phone'.")
         client = Client(session_name, self, api_id=self.api_id, api_hash=self.api_hash, device_model="хтивка",
-                        app_version="1.0")
+                        app_version="1.0", catch_up=True)
         await client.start(phone, password if password else get_password_input)
         self.init_events(client)
-        await client.init_dialogs()
 
         return client
 

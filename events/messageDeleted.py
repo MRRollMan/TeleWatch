@@ -1,8 +1,6 @@
 from telethon import events
 from telethon.tl.types import UpdateDeleteChannelMessages
-from telethon.types import Message, Chat
 
-from client import Client
 from database import Database
 
 

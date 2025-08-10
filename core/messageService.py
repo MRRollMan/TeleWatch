@@ -1,8 +1,6 @@
-from io import BytesIO
 from typing import TYPE_CHECKING
 
 from telethon import events
-from telethon.tl.types import MessageMediaPhoto
 
 from core.fileService import FileService
 

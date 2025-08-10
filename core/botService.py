@@ -1,4 +1,4 @@
-from telethon.tl.types import Channel, TypeChannelParticipantsFilter, ChannelParticipantsBots
+from telethon.tl.types import Channel, ChannelParticipantsBots
 
 from client import Client
 

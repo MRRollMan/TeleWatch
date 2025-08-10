@@ -4,8 +4,6 @@ from telethon.tl import types, functions
 
 from typing import TYPE_CHECKING
 
-from core.messageService import MessageService
-
 if TYPE_CHECKING:
     from TeleWatch import TeleWatch
 
@@ -34,8 +32,12 @@ class Client(TelegramClient):
     async def get_id(self):
         return (await self.me).id
 
-    async def configure(self):
-        await self.init_dialogs()
+    async def configure(self, has_user: bool):
+        if not has_user:
+            await self.init_dialogs()
+        else:
+            # TODO: Make custom getDifference to catch up with the latest messages
+            await self.catch_up()
         pass
 
     async def create_topic(self, channel_id, title: str):

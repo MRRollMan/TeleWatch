@@ -1,5 +1,6 @@
 import json
 
+
 class Config:
     __file = open("config.json", "r")
     config = json.load(__file)
