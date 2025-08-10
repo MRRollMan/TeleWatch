@@ -22,7 +22,7 @@ async def create_forum(client, db):
     client_id = await client.get_id()
     forum_id = (await db.get_user_by_id(client_id)).forum_id
     if forum_id is not None and forum_id != 0:
-        return
+        return None
     update = await client(functions.channels.CreateChannelRequest("TeleWatch", "TeleWatch", forum=True))
     forum_id = update.chats[0].id
     return forum_id
@@ -69,7 +69,7 @@ class TeleWatch:
         if not session_name or not phone:
             raise ValueError("User configuration must contain 'name' and 'phone'.")
         client = Client(session_name, self, api_id=self.api_id, api_hash=self.api_hash, device_model="хтивка",
-                        app_version="1.0", catch_up=True)
+                        app_version="1.0")
         await client.start(phone, password if password else get_password_input)
         self.init_events(client)
 
@@ -128,4 +128,3 @@ class TeleWatch:
         except KeyboardInterrupt:
             logging.info("Stopping TeleWatch...")
             self._stop()
-

@@ -6,6 +6,10 @@ from telethon.tl import types, functions
 
 from typing import TYPE_CHECKING
 
+from telethon.tl.types.updates import State, Difference, DifferenceSlice
+
+from core.messageService import MessageService
+
 if TYPE_CHECKING:
     from TeleWatch import TeleWatch
 
@@ -39,9 +43,7 @@ class Client(TelegramClient):
         if not has_user:
             await self.init_dialogs()
         else:
-            # TODO: Make custom getDifference to catch up with the latest messages
-            await self.catch_up()
-        pass
+            await MessageService.handle_difference(self)
 
     async def create_topic(self, channel_id, title: str):
         update: types.Updates = await self(functions.channels.CreateForumTopicRequest(channel_id, title))
@@ -52,3 +54,10 @@ class Client(TelegramClient):
 
     async def init_dialogs(self):
         await self.get_dialogs()
+
+    async def get_difference(self, state: State) -> Difference | DifferenceSlice:
+        return await self(functions.updates.GetDifferenceRequest(
+            pts=state.pts,
+            date=state.date,
+            qts=state.qts,
+        ))
