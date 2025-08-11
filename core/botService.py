@@ -27,5 +27,7 @@ class BotService:
         if not forum.forum:
             raise TypeError("Invalid forum type")
 
-        await client.add_chat_user(forum.id, await bot.get_id())
+        bot_id = await bot.get_id()
+        await client.add_chat_user(forum.id, bot_id)
+        await client.edit_admin(forum.id, bot_id, is_admin=True, manage_topics=True, title="TW")
 

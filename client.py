@@ -69,3 +69,43 @@ class Client(TelegramClient):
             date=state.date,
             qts=state.qts,
         ))
+
+    async def edit_admin(self, channel, user_id, change_info: bool = None,
+                         post_messages: bool = None,
+                         edit_messages: bool = None,
+                         delete_messages: bool = None,
+                         ban_users: bool = None,
+                         invite_users: bool = None,
+                         pin_messages: bool = None,
+                         add_admins: bool = None,
+                         manage_call: bool = None,
+                         anonymous: bool = None,
+                         is_admin: bool = None,
+                         other: bool = None,
+                         manage_topics: bool = None,
+                         post_stories: bool = None,
+                         edit_stories: bool = None,
+                         delete_stories: bool = None,
+                         title: str = ""):
+        return await self(functions.channels.EditAdminRequest(
+            channel=channel,
+            user_id=user_id,
+            admin_rights=types.ChatAdminRights(
+                change_info=change_info,
+                post_messages=post_messages,
+                edit_messages=edit_messages,
+                delete_messages=delete_messages,
+                ban_users=ban_users,
+                invite_users=invite_users,
+                pin_messages=pin_messages,
+                add_admins=add_admins,
+                anonymous=anonymous,
+                manage_call=manage_call,
+                other=other,
+                manage_topics=manage_topics,
+                post_stories=post_stories,
+                edit_stories=edit_stories,
+                delete_stories=delete_stories,
+            ),
+            rank=title
+        ))

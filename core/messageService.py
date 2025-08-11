@@ -48,7 +48,7 @@ class MessageService:
         fullname = f"{chat_obj.first_name} {chat_obj.last_name}" if chat_obj.last_name is not None else chat_obj.first_name
         async with client.lock:
             if not await db.has_chat(user, chat_id):
-                topic_id = await client.create_topic(user.forum_id, fullname)
+                topic_id = await client.bot.create_topic(user.forum_id, fullname)
                 chat = (await db.add_chat(user, chat_id, topic_id))[0]
             else:
                 chat = await db.get_chat_by_id(user, chat_id)
