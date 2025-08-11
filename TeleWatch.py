@@ -10,32 +10,6 @@ from core.messageService import MessageService
 from core.botService import BotService
 from database import Database
 from events import get_events
-from telethon.tl import functions
-
-
-def get_password_input():
-    return input('Enter your password: ')
-
-
-# TODO: Move this to core module
-async def create_forum(client, db):
-    client_id = await client.get_id()
-    forum_id = (await db.get_user_by_id(client_id)).forum_id
-    if forum_id is not None and forum_id != 0:
-        return None
-    update = await client(functions.channels.CreateChannelRequest("TeleWatch", "TeleWatch", forum=True))
-    forum_id = update.chats[0].id
-    return forum_id
-
-
-# TODO: Move this to core module
-async def init_user_data(client, db):
-    client_id = await client.get_id()
-    if not await db.has_user(client_id):
-        user = (await db.add_user(client_id))[0]
-        forum_id = await create_forum(client, db)
-        if forum_id is not None:
-            await db.set_user_forum_id(user, forum_id)
 
 
 class TeleWatch:
@@ -46,31 +20,28 @@ class TeleWatch:
         self.message_service = MessageService()
         self.events = get_events()
         self.clients: list[Client] = []
-        self.bots: list[Client] = []
+        self.bots: dict[int, Client] = {}
         self.__bots: cycle[Client] | None = None
 
     async def init_users(self):
         for user in Config.get_users():
             client = await self.init_client(user)
-            has_user = await self.db.has_user(await client.get_id())
-            if not has_user:
-                await init_user_data(client, self.db)
-            await client.configure(has_user)
+            await client.configure()
 
             self.clients.append(client)
-            for bot in self.bots:
+            for bot in self.bots.values():
                 if not await BotService.in_user_forum(client, bot):
                     await BotService.add_bot_to_forum(client, bot)
 
     async def init_client(self, user: dict) -> Client:
-        session_name: str = user.get("name")
-        phone: str = user.get("phone")
-        password: str = user.get("password")
+        session_name: str | None = user.get("name")
+        phone: str | None = user.get("phone")
+        password: str | None = user.get("password")
         if not session_name or not phone:
             raise ValueError("User configuration must contain 'name' and 'phone'.")
         client = Client(session_name, self, api_id=self.api_id, api_hash=self.api_hash, device_model="хтивка",
                         app_version="1.0")
-        await client.start(phone, password if password else get_password_input)
+        await client.start(phone, password)
         self.init_events(client)
 
         return client
@@ -91,16 +62,22 @@ class TeleWatch:
                 logging.error(f"Invalid token for bot {name}: {e}")
                 continue
 
-            self.bots.append(bot)
+            bot_id = await bot.get_id()
+            self.bots[bot_id] = bot
         if not self.bots:
             raise ValueError("No valid bots configured. Please check your configuration file.")
-        self.__bots = cycle(self.bots)
+        self.__bots = cycle(self.bots.values())
 
     @property
     def bot(self):
-        if not self.__bots:
-            raise ValueError("Bots are not initialized. Configure them in the config file.")
+        if self.__bots is None:
+            raise ValueError("Bots have not been initialized. Call start() first.")
         return next(self.__bots)
+
+    def get_bot(self, bot_id: int) -> Client:
+        if bot_id not in self.bots:
+            raise ValueError(f"Bot with ID {bot_id} does not exist.")
+        return self.bots[bot_id]
 
     def init_events(self, client: Client):
         for event in self.events:
@@ -110,18 +87,18 @@ class TeleWatch:
         for client in self.clients:
             client.disconnect()
         if self.__bots:
-            for bot in list(self.bots):
+            for bot in list(self.bots.values()):
                 bot.disconnect()
         logging.info("TeleWatch stopped successfully.")
 
     async def _start(self):
+        await self.db.init_database()
         await self.init_bots()
         await self.init_users()
         for client in self.clients:
             await client.disconnected
 
     def start(self):
-        self.db.init_database()
         loop = asyncio.get_event_loop()
         try:
             loop.run_until_complete(self._start())

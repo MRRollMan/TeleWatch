@@ -1,13 +1,11 @@
 import asyncio
-
-from telethon import TelegramClient
-
-from telethon.tl import types, functions
-
 from typing import TYPE_CHECKING
 
+from telethon import TelegramClient
+from telethon.tl import types, functions
 from telethon.tl.types.updates import State, Difference, DifferenceSlice
 
+from config import Config
 from core.messageService import MessageService
 
 if TYPE_CHECKING:
@@ -39,11 +37,24 @@ class Client(TelegramClient):
     async def get_id(self):
         return (await self.me).id
 
-    async def configure(self, has_user: bool):
-        if not has_user:
-            await self.init_dialogs()
-        else:
+    async def configure(self):
+        if await self.db.has_user(await self.get_id()):
             await MessageService.handle_difference(self)
+        else:
+            await self.init_user_data()
+            await self.get_dialogs()
+
+    async def init_user_data(self):
+        """
+        Initializes user data by creating a forum and adding user to a database.
+        """
+        client_id = await self.get_id()
+        forum_id = await self.create_forum(Config.get_forum_title(), Config.get_forum_about())
+        await self.db.add_user(client_id, forum_id)
+
+    async def create_forum(self, title: str, about: str):
+        update: types.Updates = await self(functions.channels.CreateChannelRequest(title, about, forum=True))
+        return update.chats[0].id
 
     async def create_topic(self, channel_id, title: str):
         update: types.Updates = await self(functions.channels.CreateForumTopicRequest(channel_id, title))
@@ -51,9 +62,6 @@ class Client(TelegramClient):
 
     async def add_chat_user(self, chat_id, user):
         return await self(functions.channels.InviteToChannelRequest(chat_id, [user]))
-
-    async def init_dialogs(self):
-        await self.get_dialogs()
 
     async def get_difference(self, state: State) -> Difference | DifferenceSlice:
         return await self(functions.updates.GetDifferenceRequest(

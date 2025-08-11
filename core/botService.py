@@ -1,4 +1,4 @@
-from telethon.tl.types import Channel, ChannelParticipantsBots
+from telethon.tl.types import ChannelParticipantsBots
 
 from client import Client
 
@@ -11,8 +11,6 @@ class BotService:
 
         user = await client.db.get_user_by_id(user_id)
         forum = await client.get_entity(user.forum_id)
-        if not isinstance(forum, Channel):
-            raise TypeError("Invalid forum type")
         if not forum.forum:
             raise TypeError("Invalid forum type")
 
@@ -26,8 +24,6 @@ class BotService:
     async def add_bot_to_forum(client: "Client", bot: "Client"):
         user = await client.db.get_user_by_id(await client.get_id())
         forum = await client.get_entity(user.forum_id)
-        if not isinstance(forum, Channel):
-            raise TypeError("Invalid forum type")
         if not forum.forum:
             raise TypeError("Invalid forum type")
 

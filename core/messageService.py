@@ -20,7 +20,7 @@ class MessageService:
         await client.bot.send_file(user.forum_id, file, caption=caption, reply_to=chat.topic_id)
 
     @staticmethod
-    async def handle_deleted_message(client, msg_ids: list[int]):
+    async def handle_deleted_message(client: "Client", msg_ids: list[int]):
         client_id: int = await client.get_id()
         user = await client.db.get_user_by_id(client_id)
 

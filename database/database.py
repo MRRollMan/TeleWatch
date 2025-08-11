@@ -3,11 +3,8 @@ from database.models import User, Chat, Message
 
 
 class Database:
-    def init_database(self):
-        run_async(self.init_data())
-
     @staticmethod
-    async def init_data():
+    async def init_database():
         await Tortoise.init(
             db_url='sqlite://db.sqlite3',
             modules={'models': ['database.models']}

@@ -20,3 +20,11 @@ class Config:
     @classmethod
     def get_bots(cls):
         return cls.config["bots"]
+
+    @classmethod
+    def get_forum_title(cls):
+        return cls.config["forum_title"]
+
+    @classmethod
+    def get_forum_about(cls):
+        return cls.config["forum_about"]
