@@ -14,7 +14,10 @@ class MessageService:
     @staticmethod
     async def handle_onetime_message(client: "Client", message: Message):
         user = await client.db.get_user_by_id(await client.get_id())
-        file = await FileService.download_message_media(client, message)
+        try:
+            file = await FileService.download_message_media(client, message)
+        except ValueError:
+            return
         chat = await client.db.get_chat_by_id(user, message.chat_id)
         caption = "🔥\n" + message.message
         await client.bot.send_file(user.forum_id, file, caption=caption, reply_to=chat.topic_id)
@@ -55,8 +58,11 @@ class MessageService:
 
         if message.media and message.media.ttl_seconds:
             await MessageService.handle_onetime_message(client, message)
-        else:
-            await db.add_message(user, chat, message.id, message.message, int(message.date.timestamp()))
+            return
+
+        async with client.lock:
+            if not await db.get_message(user, message.id):
+                await db.add_message(user, chat, message.id, message.message, int(message.date.timestamp()))
 
     @staticmethod
     async def handle_difference(client: "Client"):

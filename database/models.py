@@ -18,7 +18,8 @@ class Bot(Model):
 
 
 class Chat(Model):
-    chat_id = fields.IntField(pk=True)
+    id = fields.IntField(pk=True)
+    chat_id = fields.IntField()
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField("models.User", related_name="chats")
     topic_id = fields.IntField()
     whitelisted = fields.BooleanField(default=False)

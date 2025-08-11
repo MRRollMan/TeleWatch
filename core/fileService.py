@@ -25,7 +25,7 @@ class FileService:
         additional_info = []
         if isinstance(message.media, MessageMediaPhoto):
             ext = 'jpg'
-        elif isinstance(message.media, MessageMediaDocument):
+        elif isinstance(message.media, MessageMediaDocument) and message.media.document:
             for attr in message.media.document.attributes:
                 if isinstance(attr, DocumentAttributeFilename):
                     return attr.file_name
