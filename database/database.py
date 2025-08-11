@@ -30,15 +30,15 @@ class Database:
         return await user.save()
 
     @staticmethod
-    async def add_chat(user: User, chat_id: int, topic_id: int):
-        return await Chat.get_or_create(user=user, chat_id=chat_id, topic_id=topic_id)
+    async def add_chat(user: User, chat_id: int, topic_id: int) -> Chat:
+        return (await Chat.get_or_create(user=user, chat_id=chat_id, topic_id=topic_id))[0]
 
     @staticmethod
     async def has_chat(user: User, chat_id: int):
         return await Chat.get_or_none(chat_id=chat_id, user=user) is not None
 
     @staticmethod
-    async def get_chat_by_id(user: User, chat_id: int):
+    async def get_chat_by_id(user: User, chat_id: int) -> Chat | None:
         return await Chat.get_or_none(chat_id=chat_id, user=user)
 
     @staticmethod

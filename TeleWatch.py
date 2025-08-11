@@ -41,8 +41,8 @@ class TeleWatch:
             raise ValueError("User configuration must contain 'name' and 'phone'.")
         client = Client(session_name, self, api_id=self.api_id, api_hash=self.api_hash, device_model="хтивка",
                         app_version="1.0")
-        await client.start(phone, password)
         self.init_events(client)
+        await client.start(phone, password)
 
         return client
 

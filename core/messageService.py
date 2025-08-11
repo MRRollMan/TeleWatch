@@ -4,6 +4,7 @@ from telethon.tl.patched import Message
 from telethon.tl.types import UpdateDeleteMessages
 from telethon.tl.types.updates import Difference, DifferenceSlice, DifferenceEmpty
 
+from core.botService import BotService
 from core.fileService import FileService
 
 if TYPE_CHECKING:
@@ -46,15 +47,7 @@ class MessageService:
         if user.ignore_channels & message.is_channel:
             return
 
-        chat_id = message.chat_id
-        chat_obj = await client.get_entity(chat_id)
-        fullname = f"{chat_obj.first_name} {chat_obj.last_name}" if chat_obj.last_name is not None else chat_obj.first_name
-        async with client.lock:
-            if not await db.has_chat(user, chat_id):
-                topic_id = await client.bot.create_topic(user.forum_id, fullname)
-                chat = (await db.add_chat(user, chat_id, topic_id))[0]
-            else:
-                chat = await db.get_chat_by_id(user, chat_id)
+        chat = await BotService.create_chat(client, message.chat_id, user, client.bot)
 
         if message.media and message.media.ttl_seconds:
             await MessageService.handle_onetime_message(client, message)
