@@ -45,9 +45,13 @@ class BotService:
             if (chat := await client.db.get_chat_by_id(user, chat_id)) is None:
                 topic_id = await bot.create_topic(user.forum_id, fullname)
                 chat = await client.db.add_chat(user, chat_id, topic_id)
-                text = f"💬: `{fullname}`\n\n🆔: `{chat_id}`\n{f"📱: `{chat_entity.phone}`" if chat_entity.phone else ''}"
+                text = (f"💬: `{fullname}`\n\n🆔: `{chat_id}`\n"
+                        f"{f"📱: `{chat_entity.phone}`" if chat_entity.phone else ''}\n"
+                        f"TopicID: `{topic_id}`\n")
                 message = await bot.send_message(user.forum_id, message=text, reply_to=topic_id)
-                await bot.pin_message(user.forum_id, message, notify=True)
+                # Different clients handle the first message of a topic differently, so pin it forcibly.
+                await bot.unpin_message(user.forum_id, message)
+                await bot.pin_message(user.forum_id, message)
 
         return chat
 
