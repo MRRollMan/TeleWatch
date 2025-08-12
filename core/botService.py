@@ -44,8 +44,8 @@ class BotService:
         async with client.lock:
             if (chat := await client.db.get_chat_by_id(user, chat_id)) is None:
                 topic_id = await bot.create_topic(user.forum_id, fullname)
-                chat = await client.db.add_chat(user, chat_id, topic_id)
-                text = (f"💬: `{fullname}`\n\n🆔: `{chat_id}`\n"
+                chat = await client.db.add_chat(user, chat_id, topic_id, chat_entity.bot)
+                text = (f"💬: `{fullname}` **({"Bot" if chat_entity.bot else "User"})**\n\n🆔: `{chat_id}`\n"
                         f"{f"📱: `{chat_entity.phone}`" if chat_entity.phone else ''}\n"
                         f"TopicID: `{topic_id}`\n")
                 message = await bot.send_message(user.forum_id, message=text, reply_to=topic_id)

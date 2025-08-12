@@ -1,5 +1,5 @@
 from tortoise import run_async, Tortoise
-from database.models import User, Chat, Message
+from database.models import User, Chat, Message, Attachment, Bot
 
 
 class Database:
@@ -13,8 +13,8 @@ class Database:
         await Tortoise.generate_schemas()
 
     @staticmethod
-    async def add_user(user_id: int, forum_id: int = 0):
-        return await User.get_or_create(user_id=user_id, forum_id=forum_id)
+    async def add_user(user_id: int, forum_id: int = 0, files_topic_id: int = 0) -> User:
+        return (await User.get_or_create(user_id=user_id, forum_id=forum_id, files_topic_id=files_topic_id))[0]
 
     @staticmethod
     async def has_user(user_id: int):
@@ -30,8 +30,14 @@ class Database:
         return await user.save()
 
     @staticmethod
-    async def add_chat(user: User, chat_id: int, topic_id: int) -> Chat:
-        return (await Chat.get_or_create(user=user, chat_id=chat_id, topic_id=topic_id))[0]
+    async def set_user_files_topic_id(user: User, files_topic_id: int):
+        user.files_topic_id = files_topic_id
+        return await user.save()
+
+    @staticmethod
+    async def add_chat(user: User, chat_id: int, topic_id: int, is_bot: bool) -> Chat:
+        return (await Chat.get_or_create(user=user, chat_id=chat_id, topic_id=topic_id,
+                                         is_bot=is_bot, blacklisted=is_bot))[0]
 
     @staticmethod
     async def has_chat(user: User, chat_id: int):
@@ -42,10 +48,10 @@ class Database:
         return await Chat.get_or_none(chat_id=chat_id, user=user)
 
     @staticmethod
-    async def add_message(user: User, chat: Chat, message_id: int, text: str, date: int):
+    async def add_message(user: User, chat: Chat, message_id: int, text: str, date: int, grouped_id: int = None):
         if user is None or chat is None:
             return None
-        return await Message.get_or_create(user=user, chat=chat, message_id=message_id, text=text, date=date)
+        return await Message.get_or_create(user=user, chat=chat, message_id=message_id, text=text, date=date, grouped_id=grouped_id)
 
     @staticmethod
     async def get_messages(user: User):
@@ -58,3 +64,28 @@ class Database:
     @staticmethod
     async def get_message(user: User, message_id) -> Message | None:
         return await Message.get_or_none(message_id=message_id, user=user).prefetch_related("chat", "user")
+
+    @staticmethod
+    async def get_grouped_message(user: User, grouped_id) -> Message | None:
+        return await Message.get_or_none(grouped_id=grouped_id, user=user).prefetch_related("chat", "user")
+
+    @staticmethod
+    async def add_bot(bot_id: int):
+        return await Bot.get_or_create(bot_id=bot_id)
+
+    @staticmethod
+    async def has_bot(bot_id: int) -> bool:
+        return await Bot.get_or_none(bot_id=bot_id) is not None
+
+    @staticmethod
+    async def get_bot(bot_id: int) -> Bot | None:
+        return await Bot.get_or_none(bot_id=bot_id)
+
+    @staticmethod
+    async def add_attachment(bot_id: int, message: Message, topic_message_id: int, file_id: str):
+        return await Attachment.get_or_create(
+            bot=bot_id,
+            message=message,
+            topic_message_id=topic_message_id,
+            file_id=file_id
+        )
