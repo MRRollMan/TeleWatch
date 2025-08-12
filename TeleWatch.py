@@ -62,6 +62,7 @@ class TeleWatch:
                 logging.error(f"Invalid token for bot {name}: {e}")
                 continue
 
+            await bot.configure()
             bot_id = await bot.get_id()
             self.bots[bot_id] = bot
         if not self.bots:

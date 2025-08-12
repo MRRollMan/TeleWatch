@@ -3,6 +3,7 @@
   "app_hash": "abcdef1234567890abcdef1234567890",
   "forum_name": "TeleWatch",
   "forum_about": "TeleWatch",
+  "files_topic_title": "Files",
   "bots": [
     {"name": "first_bot", "token":  "123456789:ABCDEFghijklmnopqrstuvwxyz12345678"}
   ],

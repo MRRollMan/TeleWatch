@@ -28,3 +28,7 @@ class Config:
     @classmethod
     def get_forum_about(cls):
         return cls.config["forum_about"]
+
+    @classmethod
+    def get_files_topic_title(cls):
+        return cls.config["files_topic_title"]

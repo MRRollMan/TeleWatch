@@ -1,8 +1,10 @@
 import asyncio
+import datetime
 from typing import TYPE_CHECKING
 
 from telethon import TelegramClient
 from telethon.tl import types, functions
+from telethon.tl.types import InputNotifyForumTopic, InputPeerNotifySettings
 from telethon.tl.types.updates import State, Difference, DifferenceSlice
 
 from config import Config
@@ -38,19 +40,24 @@ class Client(TelegramClient):
         return (await self.me).id
 
     async def configure(self):
-        if await self.db.has_user(await self.get_id()):
+        uid = await self.get_id()
+        if await self.is_bot() and await self.db.has_bot(uid):
+            await self.db.add_bot(uid)
+        elif await self.db.has_user(uid):
             await MessageService.handle_difference(self)
         else:
-            await self.init_user_data()
+            await self.init_user_data(uid)
             await self.get_dialogs()
 
-    async def init_user_data(self):
+    async def init_user_data(self, user_id: int):
         """
         Initializes user data by creating a forum and adding user to a database.
         """
-        client_id = await self.get_id()
         forum_id = await self.create_forum(Config.get_forum_title(), Config.get_forum_about())
-        await self.db.add_user(client_id, forum_id)
+        topic_id = await self.create_topic(forum_id, Config.get_files_topic_title())
+        await self.mute_topic(forum_id, topic_id)
+        await self.update_pined_topic(forum_id, topic_id)
+        await self.db.add_user(user_id, forum_id, topic_id)
 
     async def create_forum(self, title: str, about: str):
         update: types.Updates = await self(functions.channels.CreateChannelRequest(title, about, forum=True))
@@ -59,6 +66,23 @@ class Client(TelegramClient):
     async def create_topic(self, channel_id, title: str):
         update: types.Updates = await self(functions.channels.CreateForumTopicRequest(channel_id, title))
         return update.updates[0].id
+
+    async def mute_topic(self, channel_id, topic_id):
+        input_channel = await self.get_input_entity(channel_id)
+        await self(functions.account.UpdateNotifySettingsRequest(
+            peer=InputNotifyForumTopic(input_channel, topic_id),
+            settings=InputPeerNotifySettings(
+                mute_until=datetime.datetime(year=2038, month=1, day=1, hour=1, minute=1, second=1),
+                show_previews=True
+            )
+        ))
+
+    async def update_pined_topic(self, channel_id, topic_id, pinned: bool = True):
+        return await self(functions.channels.UpdatePinnedForumTopicRequest(
+            channel=channel_id,
+            topic_id=topic_id,
+            pinned=pinned
+        ))
 
     async def add_chat_user(self, chat_id, user):
         return await self(functions.channels.InviteToChannelRequest(chat_id, [user]))
