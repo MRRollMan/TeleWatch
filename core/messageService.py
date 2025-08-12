@@ -47,7 +47,12 @@ class MessageService:
         if user.ignore_channels & message.is_channel:
             return
 
-        chat = await BotService.create_chat(client, message.chat_id, user, client.bot)
+        async with client.lock:
+            if (chat := await client.db.get_chat_by_id(user, message.chat_id)) is None:
+                chat = await BotService.create_chat(client, message.chat_id, user, client.bot)
+
+        if chat.blacklisted:
+            return
 
         if message.media and message.media.ttl_seconds:
             await MessageService.handle_onetime_message(client, message)
@@ -55,7 +60,12 @@ class MessageService:
 
         async with client.lock:
             if not await db.get_message(user, message.id):
-                await db.add_message(user, chat, message.id, message.message, int(message.date.timestamp()))
+                await db.add_message(user, chat, message.id, message.message, int(message.date.timestamp()), message.grouped_id)
+            if message.media:
+                pass
+                # processing attachments is not implemented yet.
+                # bot = client.bot
+                # await db.add_attachment(bot, message.id, 0, file_id)
 
     @staticmethod
     async def handle_difference(client: "Client"):
