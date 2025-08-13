@@ -60,7 +60,7 @@ class MessageService:
 
         if chat.blacklisted:
             return
-        if not isinstance(message.media, (MessageMediaPhoto, MessageMediaDocument)):
+        if message.media and not isinstance(message.media, (MessageMediaPhoto, MessageMediaDocument)):
             return
 
         if message.media and message.media.ttl_seconds:
