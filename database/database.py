@@ -52,17 +52,15 @@ class Database:
         return await Chat.get_or_none(chat_id=chat_id, user=user)
 
     @staticmethod
-    async def add_message(user: User, chat: Chat, message_id: int, text: str, date: int, grouped_id: int = None):
-        if user is None or chat is None:
-            return None
-        return await Message.get_or_create(
+    async def add_message(user: User, chat: Chat, message_id: int, text: str, date: int, grouped_id: int = None) -> Message:
+        return (await Message.get_or_create(
             user=user,
             chat=chat,
             message_id=message_id,
             text=text,
             date=date,
             grouped_id=grouped_id
-        )
+        ))[0]
 
     @staticmethod
     async def get_messages(user: User):
@@ -74,7 +72,8 @@ class Database:
 
     @staticmethod
     async def get_message(user: User, message_id) -> Message | None:
-        return await Message.get_or_none(message_id=message_id, user=user).prefetch_related("chat", "user")
+        return await (Message.get_or_none(message_id=message_id, user=user).
+                      prefetch_related("chat", "user", "attachments"))
 
     @staticmethod
     async def get_grouped_message(user: User, grouped_id) -> Message | None:

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from telethon.tl.patched import Message
 from telethon.tl.types import UpdateDeleteMessages
 from telethon.tl.types.updates import Difference, DifferenceSlice, DifferenceEmpty
+from telethon.utils import resolve_bot_file_id, pack_bot_file_id
 
 from core.botService import BotService
 from core.fileService import FileService
@@ -30,9 +31,16 @@ class MessageService:
 
         for d_id in msg_ids:
             msg = await client.db.get_message(user, d_id)
-            if msg is not None:
+            if msg is None:
+                continue
+            if msg.attachments:
+                media = (await client.bot.get_messages(user.forum_id, ids=msg.attachments[0].topic_message_id)).media
+                await client.bot.send_file(user.forum_id, file=media,
+                                           caption=f"🗑\n{msg.text}",
+                                           reply_to=msg.chat.topic_id)
+            else:
                 await client.bot.send_message(user.forum_id,
-                                              f"🗑: \n{msg.text}",
+                                              message=f"🗑\n{msg.text}",
                                               reply_to=msg.chat.topic_id)
 
     @staticmethod
@@ -59,19 +67,20 @@ class MessageService:
             return
 
         async with client.lock:
-            if not await db.get_message(user, message.id):
-                await db.add_message(user,
-                                     chat,
-                                     message.id,
-                                     message.message,
-                                     int(message.date.timestamp()),
-                                     message.grouped_id
-                                     )
+            if not (msg := await db.get_message(user, message.id)):
+                msg = await db.add_message(user,
+                                           chat,
+                                           message.id,
+                                           message.message,
+                                           int(message.date.timestamp()),
+                                           message.grouped_id
+                                           )
             if message.media:
-                pass
-                # processing attachments is not implemented yet.
-                # bot = client.bot
-                # await db.add_attachment(bot, message.id, 0, file_id)
+                bot = client.bot
+                bot_obj = await db.get_bot(await bot.get_id())
+                file = await FileService.download_message_media(client, message)
+                send_msg = await bot.send_file(user.forum_id, file, reply_to=user.files_topic_id)
+                await db.add_attachment(bot_obj, msg, send_msg.id, '')
 
     @staticmethod
     async def handle_difference(client: "Client"):
