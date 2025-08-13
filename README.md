@@ -2,6 +2,22 @@
 
 TeleWatch is a Python application that monitors Telegram messages and forwards them to organized forum topics using Telegram bots. It helps you keep track of conversations across multiple accounts and chats in a centralized forum structure.
 
+## ⚠️ Development Status
+
+**This project is currently in active development and should be considered unstable.**
+
+**WARNING: Do not use this application with your main/primary Telegram accounts!**
+
+- Database schema and configuration format may change without notice
+- Breaking changes may be introduced in future updates
+- Data loss or corruption is possible during development
+
+**Recommendations:**
+- Use only test accounts for development and testing
+- Backup any important data before running the application
+- Expect frequent updates that may require reconfiguration
+- Monitor the repository for breaking changes and migration guides
+
 ## Features
 
 - **Multi-account support**: Monitor multiple Telegram user accounts simultaneously
