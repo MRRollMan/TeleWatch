@@ -36,7 +36,7 @@ class Message(Model):
     grouped_id = fields.IntField(null=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField("models.User", related_name="messages")
     chat: fields.ForeignKeyRelation[Chat] = fields.ForeignKeyField("models.Chat", related_name="messages")
-    text = fields.TextField()
+    text = fields.TextField(null=True)
     date = fields.DatetimeField()
     deleted = fields.BooleanField(default=False)
 

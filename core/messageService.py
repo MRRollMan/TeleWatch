@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING
 
 from telethon.tl.patched import Message
-from telethon.tl.types import UpdateDeleteMessages
+from telethon.tl.types import UpdateDeleteMessages, MessageMediaPhoto, MessageMediaDocument
 from telethon.tl.types.updates import Difference, DifferenceSlice, DifferenceEmpty
-from telethon.utils import resolve_bot_file_id, pack_bot_file_id
 
 from core.botService import BotService
 from core.fileService import FileService
@@ -61,6 +60,8 @@ class MessageService:
 
         if chat.blacklisted:
             return
+        if not isinstance(message.media, (MessageMediaPhoto, MessageMediaDocument)):
+            return
 
         if message.media and message.media.ttl_seconds:
             await MessageService.handle_onetime_message(client, message)
@@ -75,12 +76,12 @@ class MessageService:
                                            int(message.date.timestamp()),
                                            message.grouped_id
                                            )
-            if message.media:
-                bot = client.bot
-                bot_obj = await db.get_bot(await bot.get_id())
-                file = await FileService.download_message_media(client, message)
-                send_msg = await bot.send_file(user.forum_id, file, reply_to=user.files_topic_id)
-                await db.add_attachment(bot_obj, msg, send_msg.id, '')
+        if message.media:
+            bot = client.bot
+            bot_obj = await db.get_bot(await bot.get_id())
+            file = await FileService.download_message_media(client, message)
+            send_msg = await bot.send_file(user.forum_id, file, reply_to=user.files_topic_id)
+            await db.add_attachment(bot_obj, msg, send_msg.id, '')
 
     @staticmethod
     async def handle_difference(client: "Client"):
