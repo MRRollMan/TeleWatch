@@ -1,4 +1,4 @@
-from tortoise import run_async, Tortoise
+from tortoise import Tortoise
 from database.models import User, Chat, Message, Attachment, Bot
 
 
@@ -36,8 +36,12 @@ class Database:
 
     @staticmethod
     async def add_chat(user: User, chat_id: int, topic_id: int, is_bot: bool) -> Chat:
-        return (await Chat.get_or_create(user=user, chat_id=chat_id, topic_id=topic_id,
-                                         is_bot=is_bot, blacklisted=is_bot))[0]
+        return (await Chat.get_or_create(user=user,
+                                         chat_id=chat_id,
+                                         topic_id=topic_id,
+                                         is_bot=is_bot,
+                                         blacklisted=is_bot
+                                         ))[0]
 
     @staticmethod
     async def has_chat(user: User, chat_id: int):
@@ -51,7 +55,14 @@ class Database:
     async def add_message(user: User, chat: Chat, message_id: int, text: str, date: int, grouped_id: int = None):
         if user is None or chat is None:
             return None
-        return await Message.get_or_create(user=user, chat=chat, message_id=message_id, text=text, date=date, grouped_id=grouped_id)
+        return await Message.get_or_create(
+            user=user,
+            chat=chat,
+            message_id=message_id,
+            text=text,
+            date=date,
+            grouped_id=grouped_id
+        )
 
     @staticmethod
     async def get_messages(user: User):

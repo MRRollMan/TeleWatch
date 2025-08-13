@@ -52,5 +52,3 @@ class BotService:
         await bot.pin_message(user.forum_id, message)
 
         return chat
-
-

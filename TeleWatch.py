@@ -39,7 +39,11 @@ class TeleWatch:
         password: str | None = user.get("password")
         if not session_name or not phone:
             raise ValueError("User configuration must contain 'name' and 'phone'.")
-        client = Client(session_name, self, api_id=self.api_id, api_hash=self.api_hash, device_model="хтивка",
+        client = Client(session_name,
+                        self,
+                        api_id=self.api_id,
+                        api_hash=self.api_hash,
+                        device_model=Config.get_forum_title(),
                         app_version="1.0")
         self.init_events(client)
         await client.start(phone, password)

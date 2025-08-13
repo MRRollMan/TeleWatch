@@ -12,9 +12,12 @@ from core.messageService import MessageService
 
 if TYPE_CHECKING:
     from TeleWatch import TeleWatch
+    from telethon.sessions import Session
 
 
 class Client(TelegramClient):
+    session: "Session"
+    
     def __init__(self, session, telewatch: "TeleWatch", *args, **kwargs):
         session = f"sessions/{session}"
         super().__init__(session, *args, **kwargs)

@@ -60,7 +60,13 @@ class MessageService:
 
         async with client.lock:
             if not await db.get_message(user, message.id):
-                await db.add_message(user, chat, message.id, message.message, int(message.date.timestamp()), message.grouped_id)
+                await db.add_message(user,
+                                     chat,
+                                     message.id,
+                                     message.message,
+                                     int(message.date.timestamp()),
+                                     message.grouped_id
+                                     )
             if message.media:
                 pass
                 # processing attachments is not implemented yet.
