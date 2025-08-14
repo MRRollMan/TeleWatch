@@ -86,6 +86,8 @@ class MessageService:
     @staticmethod
     async def handle_difference(client: "Client"):
         state = client.session.get_update_state(0)
+        if not state:
+            return
         diff = await client.get_difference(state)
 
         if isinstance(diff, DifferenceEmpty):

@@ -33,6 +33,8 @@ class BotService:
             raise TypeError("Invalid forum type")
 
         bot_id = await bot.get_id()
+        bot_username = (await bot.get_me()).username
+        await client.get_entity(bot_username)
         await client.add_chat_user(forum.id, bot_id)
         await client.edit_admin(forum.id, bot_id, is_admin=True, manage_topics=True, pin_messages=True, title="TW")
 
