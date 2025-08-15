@@ -32,3 +32,7 @@ class Config:
     @classmethod
     def get_files_topic_title(cls):
         return cls.config["files_topic_title"]
+
+    @classmethod
+    def get_db_url(cls):
+        return cls.config["db_url"]

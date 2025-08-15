@@ -88,12 +88,15 @@ class TeleWatch:
         for event in self.events:
             client.add_event_handler(event)
 
-    def _stop(self):
+    async def _stop(self):
         for client in self.clients:
             client.disconnect()
+            client.session.close()
         if self.__bots:
             for bot in list(self.bots.values()):
                 bot.disconnect()
+
+        await self.db.close()
         logging.info("TeleWatch stopped successfully.")
 
     async def _start(self):
@@ -109,4 +112,4 @@ class TeleWatch:
             loop.run_until_complete(self._start())
         except KeyboardInterrupt:
             logging.info("Stopping TeleWatch...")
-            self._stop()
+            loop.run_until_complete(self._stop())

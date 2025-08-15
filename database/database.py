@@ -1,4 +1,6 @@
 from tortoise import Tortoise
+
+from config import Config
 from database.models import User, Chat, Message, Attachment, Bot
 
 
@@ -6,11 +8,16 @@ class Database:
     @staticmethod
     async def init_database():
         await Tortoise.init(
-            db_url='sqlite://db.sqlite3',
+            db_url=Config.get_db_url(),
             modules={'models': ['database.models']}
         )
+
         # Generate the schema
         await Tortoise.generate_schemas()
+
+    @staticmethod
+    async def close():
+        await Tortoise.close_connections()
 
     @staticmethod
     async def add_user(user_id: int, forum_id: int = 0, files_topic_id: int = 0) -> User:
