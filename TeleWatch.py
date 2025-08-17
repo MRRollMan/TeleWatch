@@ -94,6 +94,7 @@ class TeleWatch:
         if self.__bots:
             for bot in list(self.bots.values()):
                 bot.disconnect()
+                bot.session.close()
 
         await self.db.close()
         logging.info("TeleWatch stopped successfully.")

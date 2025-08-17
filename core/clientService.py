@@ -59,11 +59,13 @@ class ClientService:
     @staticmethod
     async def configure_client(client: "Client"):
         uid = await client.get_id()
-        if await client.is_bot() and await client.db.has_bot(uid):
+        is_bot = await client.is_bot()
+
+        if is_bot and not await client.db.has_bot(uid):
             await client.db.add_bot(uid)
         elif await client.db.has_user(uid):
             await client.message_service.handle_difference(client)
-        else:
+        elif not is_bot:
             await ClientService.init_user_data(client, uid)
             await client.get_dialogs()
 
