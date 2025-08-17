@@ -1,6 +1,6 @@
 from typing import Callable
 
-from events.newMessage import new_message_handler
+from events.newMessage import new_message_handler, album_message_handler
 from events.userUpdate import user_update_handler
 from events.messageDeleted import message_deleted_handler
 from telethon.events import is_handler

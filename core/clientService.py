@@ -2,15 +2,16 @@ from typing import TYPE_CHECKING
 
 from telethon.tl.types import ChannelParticipantsBots
 
+from config import Config
 from database.models import User, Chat
 
 if TYPE_CHECKING:
     from client import Client
 
 
-class BotService:
+class ClientService:
     @staticmethod
-    async def in_user_forum(client: "Client", bot: "Client") -> bool:
+    async def bot_in_user_forum(client: "Client", bot: "Client") -> bool:
         user_id = await client.get_id()
         bot_id = await bot.get_id()
 
@@ -54,3 +55,25 @@ class BotService:
         await bot.pin_message(user.forum_id, message)
 
         return chat
+
+    @staticmethod
+    async def configure_client(client: "Client"):
+        uid = await client.get_id()
+        if await client.is_bot() and await client.db.has_bot(uid):
+            await client.db.add_bot(uid)
+        elif await client.db.has_user(uid):
+            await client.message_service.handle_difference(client)
+        else:
+            await ClientService.init_user_data(client, uid)
+            await client.get_dialogs()
+
+    @staticmethod
+    async def init_user_data(client: "Client", user_id: int):
+        """
+        Initializes user data by creating a forum and adding user to a database.
+        """
+        forum_id = await client.create_forum(Config.get_forum_title(), Config.get_forum_about())
+        topic_id = await client.create_topic(forum_id, Config.get_files_topic_title())
+        await client.mute_topic(forum_id, topic_id)
+        await client.update_pined_topic(forum_id, topic_id)
+        await client.db.add_user(user_id, forum_id, topic_id)

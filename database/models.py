@@ -16,6 +16,7 @@ class User(Model):
 
 class Bot(Model):
     bot_id = fields.IntField(pk=True)
+    attachments = fields.ReverseRelation["Attachment"]
 
 
 class Chat(Model):
@@ -39,6 +40,8 @@ class Message(Model):
     text = fields.TextField(null=True)
     date = fields.DatetimeField()
     deleted = fields.BooleanField(default=False)
+
+    attachments = fields.ReverseRelation["Attachment"]
 
 
 class Attachment(Model):

@@ -7,7 +7,8 @@ from telethon.tl import types, functions
 from telethon.tl.types import InputNotifyForumTopic, InputPeerNotifySettings
 from telethon.tl.types.updates import State, Difference, DifferenceSlice
 
-from config import Config
+from core.clientService import ClientService
+from core.fileService import FileService
 from core.messageService import MessageService
 
 if TYPE_CHECKING:
@@ -17,6 +18,9 @@ if TYPE_CHECKING:
 
 class Client(TelegramClient):
     session: "Session"
+    client_service = ClientService
+    message_service = MessageService
+    file_service = FileService
     
     def __init__(self, session, telewatch: "TeleWatch", *args, **kwargs):
         session = f"sessions/{session}"
@@ -41,26 +45,6 @@ class Client(TelegramClient):
 
     async def get_id(self):
         return (await self.me).id
-
-    async def configure(self):
-        uid = await self.get_id()
-        if await self.is_bot() and await self.db.has_bot(uid):
-            await self.db.add_bot(uid)
-        elif await self.db.has_user(uid):
-            await MessageService.handle_difference(self)
-        else:
-            await self.init_user_data(uid)
-            await self.get_dialogs()
-
-    async def init_user_data(self, user_id: int):
-        """
-        Initializes user data by creating a forum and adding user to a database.
-        """
-        forum_id = await self.create_forum(Config.get_forum_title(), Config.get_forum_about())
-        topic_id = await self.create_topic(forum_id, Config.get_files_topic_title())
-        await self.mute_topic(forum_id, topic_id)
-        await self.update_pined_topic(forum_id, topic_id)
-        await self.db.add_user(user_id, forum_id, topic_id)
 
     async def create_forum(self, title: str, about: str):
         update: types.Updates = await self(functions.channels.CreateChannelRequest(title, about, forum=True))

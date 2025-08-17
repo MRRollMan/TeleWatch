@@ -6,8 +6,6 @@ from telethon.errors import AccessTokenInvalidError
 
 from client import Client
 from config import Config
-from core.messageService import MessageService
-from core.botService import BotService
 from database import Database
 from events import get_events
 
@@ -17,7 +15,6 @@ class TeleWatch:
         self.api_id = Config.get_app_id()
         self.api_hash = Config.get_app_hash()
         self.db = Database()
-        self.message_service = MessageService()
         self.events = get_events()
         self.clients: list[Client] = []
         self.bots: dict[int, Client] = {}
@@ -26,12 +23,12 @@ class TeleWatch:
     async def init_users(self):
         for user in Config.get_users():
             client = await self.init_client(user)
-            await client.configure()
+            await client.client_service.configure_client(client)
 
             self.clients.append(client)
             for bot in self.bots.values():
-                if not await BotService.in_user_forum(client, bot):
-                    await BotService.add_bot_to_forum(client, bot)
+                if not await client.client_service.bot_in_user_forum(client, bot):
+                    await client.client_service.add_bot_to_forum(client, bot)
 
     async def init_client(self, user: dict) -> Client:
         session_name: str | None = user.get("name")
@@ -66,7 +63,7 @@ class TeleWatch:
                 logging.error(f"Invalid token for bot {name}: {e}")
                 continue
 
-            await bot.configure()
+            await bot.client_service.configure_client(bot)
             bot_id = await bot.get_id()
             self.bots[bot_id] = bot
         if not self.bots:
