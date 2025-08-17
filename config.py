@@ -2,8 +2,8 @@ import json
 
 
 class Config:
-    __file = open("config.json", "r")
-    config = json.load(__file)
+    with open("config.json", "r") as file:
+        config = json.load(file)
 
     @classmethod
     def get_app_id(cls):
