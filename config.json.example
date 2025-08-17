@@ -1,7 +1,7 @@
 {
   "app_id": "1234567",
   "app_hash": "abcdef1234567890abcdef1234567890",
-  "db_url": "sqlite://db/db.sqlite3"
+  "db_url": "sqlite://db/db.sqlite3",
   "forum_name": "TeleWatch",
   "forum_about": "TeleWatch",
   "files_topic_title": "Files",
@@ -10,6 +10,6 @@
   ],
   "users": [
     {"name": "first_account", "phone": "+000000000000", "password": "abc123"},
-    {"name": "second_account", "phone": "+000000000000", "password": "abc123"}
+    {"name": "second_account", "phone": "+000000000000", "password": "abc123", "app_id": "1234567", "app_hash": "abcdef1234567890abcdef1234567890"}
   ]
 }
