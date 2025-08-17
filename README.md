@@ -61,8 +61,9 @@ Create a `config.json` file based on the example:
 
 ```json
 {
-  "app_id": "1234567",
-  "app_hash": "abcdef1234567890abcdef1234567890",
+  "api_id": "1234567",
+  "api_hash": "abcdef1234567890abcdef1234567890",
+  "db_url": "sqlite://db/db.sqlite3",
   "forum_name": "TeleWatch",
   "forum_about": "TeleWatch monitoring forum",
   "files_topic_title": "Files",
@@ -71,7 +72,7 @@ Create a `config.json` file based on the example:
   ],
   "users": [
     {"name": "main_account", "phone": "+1234567890", "password": "your_2fa_password"},
-    {"name": "secondary_account", "phone": "+0987654321", "password": "your_2fa_password"}
+    {"name": "secondary_account", "phone": "+0987654321", "password": "your_2fa_password", "api_id": "1234567", "api_hash": "abcdef1234567890abcdef1234567890"}
   ]
 }
 ```
@@ -84,6 +85,7 @@ Create a `config.json` file based on the example:
 - **files_topic_title**: Name for the topic where media files will be organized
 - **bots**: Array of bot configurations with name and token
 - **users**: Array of user accounts to monitor with session name, phone, and 2FA password (if specified)
+- **api_id and hash inside user**: User-specific api_id and hash
 
 ## Usage
 
@@ -101,7 +103,7 @@ python main.py
    - Monitor all conversations from configured accounts
    - Create topic threads for each chat/contact
    - Forward messages to appropriate topics
-   - Track message deletions (Limited)
+   - Track message deletions
    - Handle media files and self-destructing content
 
 ## Features in Detail
@@ -123,7 +125,7 @@ python main.py
 - [x] Topic creation and management
 
 ### Media Handling
-- [ ] Download and forward photos, videos, voice messages
+- [x] Download and forward photos, videos, voice messages
 - [x] Special handling for self-destructing media
 - [x] Organized file storage in dedicated topics
 
