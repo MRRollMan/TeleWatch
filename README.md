@@ -112,6 +112,7 @@ python main.py
 - [x] Monitors private messages (group chats and channels in the future)
 - [ ] Monitors edited messages
 - [ ] Configurable filtering (ignore users/groups/channels)
+- [ ] Forced chat processing
 
 ### Forum Organization
 - [x] Automatic forum creation for each monitored account

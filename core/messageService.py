@@ -65,28 +65,27 @@ class MessageService:
         for g_id, messages_list in messages.items():
             if g_id == 0:
                 for message in messages_list:
+                    bot = client.telewatch.bots.get(message.attachments[0].bot.bot_id)
                     if message.attachments:
                         file = (
-                            await client.bot.get_messages(user.forum_id, ids=message.attachments[0].topic_message_id)
+                            await bot.get_messages(user.forum_id, ids=message.attachments[0].topic_message_id)
                         ).media
-                        await client.bot.send_file(user.forum_id, file=file,
-                                                   caption=f"🗑\n{message.text}",
-                                                   reply_to=message.chat.topic_id)
+                        await bot.send_file(user.forum_id, file=file,
+                                            caption=f"🗑\n{message.text}",
+                                            reply_to=message.chat.topic_id)
                     else:
-                        await client.bot.send_message(user.forum_id,
-                                                      message=f"🗑\n{message.text}",
-                                                      reply_to=message.chat.topic_id)
+                        await bot.send_message(user.forum_id,
+                                               message=f"🗑\n{message.text}",
+                                               reply_to=message.chat.topic_id)
             else:
-                files = []
-                for message in messages_list:
-                    if not message.attachments:
-                        continue
-                    chat_message = await client.bot.get_messages(user.forum_id,
-                                                                 ids=message.attachments[0].topic_message_id)
-                    files.append(chat_message.media)
+                bot = client.telewatch.bots.get(messages_list[0].attachments[0].bot.bot_id)
+                messages_ids = [message.attachments[0].topic_message_id for message in messages_list if message.attachments]
+                chat_messages = await bot.get_messages(user.forum_id,
+                                                              ids=messages_ids)
+                files = [message.media for message in chat_messages if message.media]
                 if not files:
                     continue
-                await client.bot.send_file(user.forum_id, file=files,
+                await bot.send_file(user.forum_id, file=files,
                                            caption=f"🗑\n{messages_list[0].text}",
                                            reply_to=messages_list[0].chat.topic_id)
 
@@ -126,7 +125,6 @@ class MessageService:
 
             for send_message, message_obj in zip(send_messages, messages_obj):
                 await client.db.add_attachment(bot_obj, message_obj, send_message.id, '')
-
 
     @staticmethod
     async def handle_difference(client: "Client"):

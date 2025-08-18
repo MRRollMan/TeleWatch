@@ -80,7 +80,7 @@ class Database:
     @staticmethod
     async def get_message(user: User, message_id) -> Message | None:
         return await (Message.get_or_none(message_id=message_id, user=user).
-                      prefetch_related("chat", "user", "attachments"))
+                      prefetch_related("chat", "user", "attachments", "attachments__bot"))
 
     @staticmethod
     async def get_grouped_message(user: User, grouped_id) -> Message | None:
