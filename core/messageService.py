@@ -65,8 +65,8 @@ class MessageService:
         for g_id, messages_list in messages.items():
             if g_id == 0:
                 for message in messages_list:
-                    bot = client.telewatch.bots.get(message.attachments[0].bot.bot_id)
                     if message.attachments:
+                        bot = client.telewatch.bots.get(message.attachments[0].bot.bot_id)
                         file = (
                             await bot.get_messages(user.forum_id, ids=message.attachments[0].topic_message_id)
                         ).media
@@ -74,7 +74,7 @@ class MessageService:
                                             caption=f"🗑\n{message.text}",
                                             reply_to=message.chat.topic_id)
                     else:
-                        await bot.send_message(user.forum_id,
+                        await client.bot.send_message(user.forum_id,
                                                message=f"🗑\n{message.text}",
                                                reply_to=message.chat.topic_id)
             else:
