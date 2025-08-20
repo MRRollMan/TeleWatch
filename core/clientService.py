@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from telethon.tl.types import ChannelParticipantsBots, Chat, User
+from telethon.tl.types import ChannelParticipantsBots, Chat, User, Username
 from database.database import User as DBUser
 
 from config import Config
@@ -47,16 +47,26 @@ class ClientService:
         fullname = f"{chat.first_name} {chat.last_name}" \
             if chat.last_name is not None else chat.first_name
         topic_id = await bot.create_topic(user.forum_id, fullname)
-        chat = await client.db.add_chat(user, chat.id, topic_id, chat.bot)
-        text = (f"💬: `{fullname}` **({"Bot" if chat.bot else "User"})**\n\n🆔: `{chat.id}`\n"
+        chat_obj = await client.db.add_chat(user, chat.id, topic_id, chat.bot)
+        text = (f"💬: `{fullname}` "
+                f"({"🤖" if chat.bot else "👤"}"
+                f"{'✅' if chat.verified else ''}"
+                f"{'⭐' if chat.premium else ''}"
+                f"{'⚠️' if chat.scam else ''}"
+                f"{'🤥' if chat.fake else ''}"
+                f"{'❌' if chat.deleted else ''})\n\n"
+                f"🆔: `{chat.id}`\n"
+                f"{f'📛: @{chat.username}\n' if chat.username is not None else ''}"
+                f"{f"📛: {' '.join(map(lambda x: f"@{x.username}", chat.usernames))}\n" if chat.usernames else ''}"
                 f"{f"📱: `{chat.phone}`" if chat.phone else ''}\n"
                 f"TopicID: `{topic_id}`\n")
+
         message = await bot.send_message(user.forum_id, message=text, reply_to=topic_id)
         # Different clients handle the first message of a topic differently, so pin it forcibly.
         await bot.unpin_message(user.forum_id, message)
         await bot.pin_message(user.forum_id, message)
 
-        return chat
+        return chat_obj
 
     @staticmethod
     async def configure_client(client: "Client"):

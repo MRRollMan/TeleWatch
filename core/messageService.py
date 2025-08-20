@@ -123,6 +123,7 @@ class MessageService:
             bot_obj = await client.db.get_bot(await bot.get_id())
             files = [await client.file_service.download_message_media(client, message) for message in messages]
             files = files[0] if len(files) == 1 else files
+            caption = f"[Topic](https://t.me/c/{user.forum_id}/{chat.topic_id})"
             send_messages = await bot.send_file(user.forum_id, files, reply_to=user.files_topic_id, caption=caption)
             if isinstance(send_messages, Message):
                 send_messages = [send_messages]
