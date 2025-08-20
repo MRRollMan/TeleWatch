@@ -4,5 +4,6 @@ __pycache__/
 
 config.json
 sessions/
+logs/
 *.session
 db.sqlite3*
