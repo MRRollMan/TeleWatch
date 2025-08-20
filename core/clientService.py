@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
-from telethon.tl.types import ChannelParticipantsBots
+from telethon.tl.types import ChannelParticipantsBots, Chat, User
+from database.database import User as DBUser
 
 from config import Config
-from database.models import User, Chat
 
 if TYPE_CHECKING:
     from client import Client
@@ -40,14 +40,16 @@ class ClientService:
         await client.edit_admin(forum.id, bot_id, is_admin=True, manage_topics=True, pin_messages=True, title="TW")
 
     @staticmethod
-    async def create_chat(client: "Client", chat_id: int, user: User, bot: "Client") -> Chat:
-        chat_entity = await client.get_entity(chat_id)
-        fullname = f"{chat_entity.first_name} {chat_entity.last_name}" \
-            if chat_entity.last_name is not None else chat_entity.first_name
+    async def create_chat(client: "Client", chat: Chat | User, user: DBUser, bot: "Client") -> Chat:
+        if isinstance(chat, Chat):
+            # TODO: Handle group chats
+            return chat
+        fullname = f"{chat.first_name} {chat.last_name}" \
+            if chat.last_name is not None else chat.first_name
         topic_id = await bot.create_topic(user.forum_id, fullname)
-        chat = await client.db.add_chat(user, chat_id, topic_id, chat_entity.bot)
-        text = (f"💬: `{fullname}` **({"Bot" if chat_entity.bot else "User"})**\n\n🆔: `{chat_id}`\n"
-                f"{f"📱: `{chat_entity.phone}`" if chat_entity.phone else ''}\n"
+        chat = await client.db.add_chat(user, chat.id, topic_id, chat.bot)
+        text = (f"💬: `{fullname}` **({"Bot" if chat.bot else "User"})**\n\n🆔: `{chat.id}`\n"
+                f"{f"📱: `{chat.phone}`" if chat.phone else ''}\n"
                 f"TopicID: `{topic_id}`\n")
         message = await bot.send_message(user.forum_id, message=text, reply_to=topic_id)
         # Different clients handle the first message of a topic differently, so pin it forcibly.
