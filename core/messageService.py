@@ -57,6 +57,9 @@ class MessageService:
             if msg is None:
                 continue
 
+            msg.deleted = True
+            await msg.save()
+
             if msg.grouped_id:
                 messages[msg.grouped_id].append(msg)
             else:
