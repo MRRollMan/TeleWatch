@@ -80,7 +80,7 @@ class Database:
     @staticmethod
     async def get_message(user: User, message_id) -> Message | None:
         return await (Message.get_or_none(message_id=message_id, user=user).
-                      prefetch_related("chat", "user", "attachments", "attachments__bot"))
+                      prefetch_related("chat", "user", "attachment", "attachment__bot"))
 
     @staticmethod
     async def get_grouped_message(user: User, grouped_id) -> Message | None:
@@ -99,10 +99,16 @@ class Database:
         return await Bot.get_or_none(bot_id=bot_id)
 
     @staticmethod
-    async def add_attachment(bot_id: int, message: Message, topic_message_id: int, file_id: str):
-        return await Attachment.get_or_create(
+    async def add_attachment(bot_id: int, topic_message_id: int, file_id: str):
+        return (await Attachment.get_or_create(
             bot=bot_id,
-            message=message,
             topic_message_id=topic_message_id,
             file_id=file_id
-        )
+        ))[0]
+
+    @staticmethod
+    async def get_attachment(bot_id: int, file_id: str) -> Attachment | None:
+        return await Attachment.get_or_none(
+            bot=bot_id,
+            file_id=file_id
+        ).prefetch_related("bot", "messages", "messages__chat", "messages__user")

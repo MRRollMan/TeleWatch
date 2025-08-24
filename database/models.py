@@ -37,16 +37,17 @@ class Message(Model):
     grouped_id = fields.IntField(null=True)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField("models.User", related_name="messages")
     chat: fields.ForeignKeyRelation[Chat] = fields.ForeignKeyField("models.Chat", related_name="messages")
+    attachment: fields.ForeignKeyRelation["Attachment"] = fields.ForeignKeyField(
+        "models.Attachment", related_name="messages", null=True)
     text = fields.TextField(null=True)
     date = fields.DatetimeField()
     deleted = fields.BooleanField(default=False)
-
-    attachments = fields.ReverseRelation["Attachment"]
 
 
 class Attachment(Model):
     id = fields.IntField(pk=True)
     bot: fields.ForeignKeyRelation[Bot] = fields.ForeignKeyField("models.Bot", related_name="attachments")
-    message: fields.ForeignKeyRelation[Message] = fields.ForeignKeyField("models.Message", related_name="attachments")
     topic_message_id = fields.IntField()
     file_id = fields.CharField(max_length=255, required=True)
+
+    messages: fields.ReverseRelation["Message"]

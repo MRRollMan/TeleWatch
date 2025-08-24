@@ -65,10 +65,10 @@ class MessageService:
         for g_id, messages_list in messages.items():
             if g_id == 0:
                 for message in messages_list:
-                    if message.attachments:
-                        bot = client.telewatch.bots.get(message.attachments[0].bot.bot_id)
+                    if message.attachment:
+                        bot = client.telewatch.bots.get(message.attachment.bot.bot_id)
                         chat_message = await bot.get_messages(user.forum_id,
-                                                              ids=message.attachments[0].topic_message_id)
+                                                              ids=message.attachment.topic_message_id)
                         if not isinstance(chat_message, Message):
                             continue
 
@@ -80,9 +80,11 @@ class MessageService:
                                                       message=f"🗑\n{message.text}",
                                                       reply_to=message.chat.topic_id)
             else:
-                bot = client.telewatch.bots.get(messages_list[0].attachments[0].bot.bot_id)
-                messages_ids = [message.attachments[0].topic_message_id for message in messages_list if
-                                message.attachments]
+                if not messages_list[0].attachment:
+                    continue
+                bot = client.telewatch.bots.get(messages_list[0].attachment.bot.bot_id)
+                messages_ids = [message.attachment.topic_message_id for message in messages_list if
+                                message.attachment]
                 chat_messages = await bot.get_messages(user.forum_id,
                                                        ids=messages_ids)
                 files = [message.media for message in chat_messages if message.media]
@@ -105,7 +107,7 @@ class MessageService:
         if chat.blacklisted:
             return
 
-        messages_obj = []
+        messages_obj: list[DBMessage] = []
         for message in messages:
             if message.media and message.media.ttl_seconds:
                 await MessageService.handle_onetime_message(client, message)
@@ -118,9 +120,19 @@ class MessageService:
                                                       )
             messages_obj.append(msg)
 
-        if messages[0].media:
-            bot = client.bot
-            bot_obj = await client.db.get_bot(await bot.get_id())
+        bot = client.bot
+        bot_obj = await client.db.get_bot(await bot.get_id())
+
+        if messages[0].sticker:
+            attachment = await client.db.get_attachment(bot_obj, messages[0].sticker.id)
+            if not attachment:
+                send_message = await bot.send_file(user.forum_id, messages[0].sticker, message=messages[0].message,
+                                                   reply_to=user.files_topic_id)
+                attachment = await client.db.add_attachment(bot_obj, send_message.id, send_message.document.id)
+            messages_obj[0].attachment = attachment
+            await messages_obj[0].save()
+
+        elif messages[0].media:
             files = [await client.file_service.download_message_media(client, message) for message in messages]
             files = files[0] if len(files) == 1 else files
             caption = f"[Topic](https://t.me/c/{user.forum_id}/{chat.topic_id})"
@@ -129,7 +141,9 @@ class MessageService:
                 send_messages = [send_messages]
 
             for send_message, message_obj in zip(send_messages, messages_obj):
-                await client.db.add_attachment(bot_obj, message_obj, send_message.id, '')
+                attachment = await client.db.add_attachment(bot_obj, send_message.id, send_message.file.media.id)
+                message_obj.attachment = attachment
+                await message_obj.save()
 
     @staticmethod
     async def handle_difference(client: "Client"):
