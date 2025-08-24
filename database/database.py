@@ -112,8 +112,8 @@ class Database:
 
     @staticmethod
     async def get_attachment(bot_id: int, file_id: str, chat: Chat) -> Attachment | None:
-        return await Attachment.get_or_none(
+        return await Attachment.filter(
             bot=bot_id,
             file_id=file_id,
             messages__chat=chat
-        ).prefetch_related("bot", "messages")
+        ).first().prefetch_related("bot", "messages")
