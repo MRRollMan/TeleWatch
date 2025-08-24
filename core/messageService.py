@@ -136,7 +136,7 @@ class MessageService:
         bot_obj = await client.db.get_bot(await bot.get_id())
 
         if messages[0].sticker:
-            attachment = await client.db.get_attachment(bot_obj, messages[0].sticker.id, chat)
+            attachment = await client.db.get_attachment(bot_obj, messages[0].sticker.id, user)
             if not attachment:
                 send_message = await bot.send_file(user.forum_id, messages[0].sticker, message=messages[0].message,
                                                    reply_to=user.files_topic_id)
