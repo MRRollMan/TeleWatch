@@ -1,9 +1,11 @@
 import json
+import logging
 
 
 class Config:
     with open("config.json", "r") as file:
         config = json.load(file)
+        logging.info("Configuration loaded successfully")
 
     @classmethod
     def get_app_id(cls):

@@ -1,4 +1,5 @@
 from tortoise import Tortoise
+import logging
 
 from config import Config
 from database.models import User, Chat, Message, Attachment, Bot
@@ -7,6 +8,7 @@ from database.models import User, Chat, Message, Attachment, Bot
 class Database:
     @staticmethod
     async def init_database():
+        logging.info("Initializing database connection...")
         await Tortoise.init(
             db_url=Config.get_db_url(),
             modules={'models': ['database.models']}
@@ -14,9 +16,11 @@ class Database:
 
         # Generate the schema
         await Tortoise.generate_schemas()
+        logging.info("Database initialized successfully")
 
     @staticmethod
     async def close():
+        logging.info("Closing database connections...")
         await Tortoise.close_connections()
 
     @staticmethod

@@ -1,5 +1,7 @@
 from collections import defaultdict
+from datetime import timedelta
 from typing import TYPE_CHECKING
+import logging
 
 from telethon.tl.patched import Message
 from database.models import Message as DBMessage
@@ -28,8 +30,7 @@ class MessageService:
 
         messages = event.messages if isinstance(event, Album.Event) else [event.message]
 
-        if ((messages[0].media and not isinstance(messages[0].media, (MessageMediaPhoto, MessageMediaDocument)))
-                or messages[0].out):
+        if messages[0].out:
             return
 
         await MessageService.handle_messages(client, messages, event.text)
@@ -105,6 +106,14 @@ class MessageService:
         async with client.lock:
             if (chat := await client.db.get_chat_by_id(user, messages[0].chat_id)) is None:
                 _chat_obj = await messages[0].get_chat()
+                if _chat_obj is None:
+                    for dialog in await client.get_dialogs(10, offset_date=messages[0].date+timedelta(minutes=1)):
+                        if dialog.id == messages[0].chat_id:
+                            _chat_obj = dialog.entity
+                            break
+                    else:
+                        logging.info(f"Chat with ID {messages[0].chat_id} not found for user {user_id}")
+                        return
                 chat = await client.client_service.create_chat(client, _chat_obj, user, client.bot)
 
         if chat.blacklisted:
@@ -112,7 +121,7 @@ class MessageService:
 
         messages_obj: list[DBMessage] = []
         for message in messages:
-            if message.media and message.media.ttl_seconds:
+            if isinstance(message.media, (MessageMediaPhoto, MessageMediaDocument)) and message.media.ttl_seconds:
                 await MessageService.handle_onetime_message(client, message)
                 return
 
@@ -135,7 +144,7 @@ class MessageService:
             messages_obj[0].attachment = attachment
             await messages_obj[0].save()
 
-        elif messages[0].media:
+        elif isinstance(messages[0].media, (MessageMediaPhoto, MessageMediaDocument)):
             files = [await client.file_service.download_message_media(client, message) for message in messages]
             files = files[0] if len(files) == 1 else files
             caption = f"[Topic](https://t.me/c/{user.forum_id}/{chat.topic_id})"
@@ -153,12 +162,20 @@ class MessageService:
         state = client.session.get_update_state(0)
         if not state:
             return
+        
+        logging.info("Processing message differences (synchronizing missed messages)...")
         diff = await client.get_difference(state)
 
         if isinstance(diff, DifferenceEmpty):
+            logging.info("No message differences found - client is up to date")
             return
 
         new_messages = list(filter(lambda m: not m.out, diff.new_messages))
+        deleted_messages_count = sum(1 for update in diff.other_updates if isinstance(update, UpdateDeleteMessages))
+        
+        if new_messages or deleted_messages_count > 0:
+            logging.info(f"Processing {len(new_messages)} new messages and {deleted_messages_count} deletion events")
+        
         events = MessageService.parse_messages_to_events(new_messages)
         for event in events:
             await MessageService.handle_message_event(client, event)
@@ -170,9 +187,11 @@ class MessageService:
         if isinstance(diff, Difference):
             new_state = diff.state
             client.session.set_update_state(0, new_state)
+            logging.info("Message synchronization completed successfully")
         elif isinstance(diff, DifferenceSlice):
             new_state = diff.intermediate_state
             client.session.set_update_state(0, new_state)
+            logging.info("Processing additional message differences (continuing synchronization)...")
             await MessageService.handle_difference(client)
 
     @staticmethod

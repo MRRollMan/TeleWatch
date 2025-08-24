@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
+import logging
 
-from telethon.tl.types import ChannelParticipantsBots, Chat, User, Username
+from telethon.tl.types import ChannelParticipantsBots, Chat, User
 from database.database import User as DBUser
 
 from config import Config
@@ -46,6 +47,8 @@ class ClientService:
             return chat
         fullname = f"{chat.first_name} {chat.last_name}" \
             if chat.last_name is not None else chat.first_name
+        
+        logging.info(f"Creating new chat topic for user '{fullname}' (ID: {chat.id})")
         topic_id = await bot.create_topic(user.forum_id, fullname)
         chat_obj = await client.db.add_chat(user, chat.id, topic_id, chat.bot)
         text = (f"💬: `{fullname}` "
@@ -55,7 +58,7 @@ class ClientService:
                 f"{'⚠️' if chat.scam else ''}"
                 f"{'🤥' if chat.fake else ''}"
                 f"{'❌' if chat.deleted else ''})\n\n"
-                f"🆔: `{chat.id}`\n"
+                f"🆔: `{chat.id}` ([Open](tg://openmessage?user_id={chat.id})\n"
                 f"{f'📛: @{chat.username}\n' if chat.username is not None else ''}"
                 f"{f"📛: {' '.join(map(lambda x: f"@{x.username}", chat.usernames))}\n" if chat.usernames else ''}"
                 f"{f"📱: `{chat.phone}`" if chat.phone else ''}\n"
@@ -86,8 +89,10 @@ class ClientService:
         """
         Initializes user data by creating a forum and adding user to a database.
         """
+        logging.info(f"Initializing user data for user ID: {user_id}")
         forum_id = await client.create_forum(Config.get_forum_title(), Config.get_forum_about())
         topic_id = await client.create_topic(forum_id, Config.get_files_topic_title())
         await client.mute_topic(forum_id, topic_id)
         await client.update_pined_topic(forum_id, topic_id)
         await client.db.add_user(user_id, forum_id, topic_id)
+        logging.info(f"User forum created successfully - Forum ID: {forum_id}, Files Topic ID: {topic_id}")
