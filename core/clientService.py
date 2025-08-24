@@ -58,7 +58,7 @@ class ClientService:
                 f"{'⚠️' if chat.scam else ''}"
                 f"{'🤥' if chat.fake else ''}"
                 f"{'❌' if chat.deleted else ''})\n\n"
-                f"🆔: `{chat.id}` ([Open](tg://openmessage?user_id={chat.id})\n"
+                f"🆔: `{chat.id}` ([Open](tg://openmessage?user_id={chat.id}))\n"
                 f"{f'📛: @{chat.username}\n' if chat.username is not None else ''}"
                 f"{f"📛: {' '.join(map(lambda x: f"@{x.username}", chat.usernames))}\n" if chat.usernames else ''}"
                 f"{f"📱: `{chat.phone}`" if chat.phone else ''}\n"
