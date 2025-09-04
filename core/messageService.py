@@ -4,11 +4,14 @@ from typing import TYPE_CHECKING
 import logging
 
 from telethon.tl.patched import Message
+
 from database.models import Message as DBMessage
 from telethon.tl.types import UpdateDeleteMessages, MessageMediaPhoto, MessageMediaDocument
 from telethon.tl.types.updates import Difference, DifferenceSlice, DifferenceEmpty
 from telethon.events.album import Album
 from telethon.events.newmessage import NewMessage
+
+from utils.utils import send_chunked_message
 
 if TYPE_CHECKING:
     from client import Client
@@ -43,8 +46,9 @@ class MessageService:
         except ValueError:
             return
         chat = await client.db.get_chat_by_id(user, message.chat_id)
+
         caption = "🔥\n" + message.message
-        await client.bot.send_file(user.forum_id, file, caption=caption, reply_to=chat.topic_id)
+        await send_chunked_message(client, caption, user.forum_id, chat.topic_id, file=file)
 
     @staticmethod
     async def handle_deleted_message(client: "Client", msg_ids: list[int]):
@@ -76,13 +80,13 @@ class MessageService:
                         if not isinstance(chat_message, Message):
                             continue
 
-                        await bot.send_file(user.forum_id, file=chat_message.media,
-                                            caption=f"🗑\n{message.text}",
-                                            reply_to=message.chat.topic_id)
+                        caption = f"🗑\n{message.text}"
+
+                        await send_chunked_message(client, caption, user.forum_id, message.chat.topic_id,
+                                                   file=chat_message.media, bot=bot)
                     else:
-                        await client.bot.send_message(user.forum_id,
-                                                      message=f"🗑\n{message.text}",
-                                                      reply_to=message.chat.topic_id)
+                        message_text = f"🗑\n{message.text}"
+                        await send_chunked_message(client, message_text, user.forum_id, message.chat.topic_id)
             else:
                 if not messages_list[0].attachment:
                     continue
@@ -94,9 +98,10 @@ class MessageService:
                 files = [message.media for message in chat_messages if message.media]
                 if not files:
                     continue
-                await bot.send_file(user.forum_id, file=files,
-                                    caption=f"🗑\n{messages_list[0].text}",
-                                    reply_to=messages_list[0].chat.topic_id)
+
+                caption = f"🗑\n{messages_list[0].text}"
+                await send_chunked_message(client, caption, user.forum_id, messages_list[0].chat.topic_id,
+                                           file=files, bot=bot)
 
     @staticmethod
     async def handle_messages(client: "Client", messages: list[Message], caption: str | None = None):
@@ -107,7 +112,7 @@ class MessageService:
             if (chat := await client.db.get_chat_by_id(user, messages[0].chat_id)) is None:
                 _chat_obj = await messages[0].get_chat()
                 if _chat_obj is None:
-                    for dialog in await client.get_dialogs(10, offset_date=messages[0].date+timedelta(minutes=1)):
+                    for dialog in await client.get_dialogs(10, offset_date=messages[0].date + timedelta(minutes=1)):
                         if dialog.id == messages[0].chat_id:
                             _chat_obj = dialog.entity
                             break
@@ -162,7 +167,7 @@ class MessageService:
         state = client.session.get_update_state(0)
         if not state:
             return
-        
+
         logging.info("Processing message differences (synchronizing missed messages)...")
         diff = await client.get_difference(state)
 
@@ -172,10 +177,10 @@ class MessageService:
 
         new_messages = list(filter(lambda m: not m.out, diff.new_messages))
         deleted_messages_count = sum(1 for update in diff.other_updates if isinstance(update, UpdateDeleteMessages))
-        
+
         if new_messages or deleted_messages_count > 0:
             logging.info(f"Processing {len(new_messages)} new messages and {deleted_messages_count} deletion events")
-        
+
         events = MessageService.parse_messages_to_events(new_messages)
         for event in events:
             await MessageService.handle_message_event(client, event)
