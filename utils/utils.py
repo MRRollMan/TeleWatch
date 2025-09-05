@@ -24,6 +24,7 @@ async def send_chunked_message(client, text: str, entity, reply_to: int, file=No
 
         remaining_text = text[text_limit:]
         while remaining_text:
+            remaining_text = "⬆️\n" + remaining_text
             part = remaining_text[:TEXT_LIMIT]
             remaining_text = remaining_text[TEXT_LIMIT:]
             await client.bot.send_message(entity, part, reply_to=reply_to)

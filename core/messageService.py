@@ -71,6 +71,7 @@ class MessageService:
                 messages[0].append(msg)
 
         for g_id, messages_list in messages.items():
+            messages_list = sorted(messages_list, key=lambda m: m.message_id)
             if g_id == 0:
                 for message in messages_list:
                     if message.attachment:
