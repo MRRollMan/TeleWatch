@@ -4,14 +4,30 @@ import logging
 from config import Config
 from database.models import User, Chat, Message, Attachment, Bot
 
+CONFIG = {
+    "connections": {
+        "default": {
+            "engine": "tortoise.backends.sqlite",
+            "credentials": {
+                "file_path": Config.get_db_url(),
+            },
+        },
+    },
+    "apps": {
+        "models": {
+            "models": ["database.models", "aerich.models"],
+            "default_connection": "default",
+        },
+    },
+}
+
 
 class Database:
     @staticmethod
     async def init_database():
         logging.info("Initializing database connection...")
         await Tortoise.init(
-            db_url=Config.get_db_url(),
-            modules={'models': ['database.models']}
+            config=CONFIG
         )
 
         # Generate the schema
