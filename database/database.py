@@ -85,6 +85,12 @@ class Database:
     async def get_message(user: User, message_id) -> Message | None:
         return await (Message.get_or_none(message_id=message_id, user=user).
                       prefetch_related("chat", "user", "attachment", "attachment__bot"))
+    
+    @staticmethod
+    async def edit_message_text(message: Message, new_text: str) -> Message:
+        message.text = new_text
+        await message.save()
+        return message
 
     @staticmethod
     async def get_grouped_message(user: User, grouped_id) -> Message | None:
