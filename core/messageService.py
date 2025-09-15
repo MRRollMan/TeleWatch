@@ -94,8 +94,7 @@ class MessageService:
                 bot = client.telewatch.bots.get(messages_list[0].attachment.bot.bot_id)
                 messages_ids = [message.attachment.topic_message_id for message in messages_list if
                                 message.attachment]
-                chat_messages = await bot.get_messages(user.forum_id,
-                                                       ids=messages_ids)
+                chat_messages = await bot.get_messages(user.forum_id, ids=messages_ids)
                 files = [message.media for message in chat_messages if message.media]
                 if not files:
                     continue
@@ -151,15 +150,33 @@ class MessageService:
             await messages_obj[0].save()
 
         elif isinstance(messages[0].media, (MessageMediaPhoto, MessageMediaDocument)):
-            files = [await client.file_service.download_message_media(client, message) for message in messages]
+            original_attachment_ids = []
+            files = []
+
+            for message, message_obj in zip(messages, messages_obj):
+                attachment = await client.db.get_attachment_by_original_id(bot_obj, message.file.media.id, user)
+                if attachment:
+                    attachment = await client.db.add_attachment(bot_obj, attachment.topic_message_id,
+                                                                attachment.file_id, attachment.original_file_id)
+                    message_obj.attachment = attachment
+                    await message_obj.save()
+                else:
+                    file = await client.file_service.download_message_media(client, message)
+                    files.append(file)
+                    original_attachment_ids.append(message.file.media.id)
+
+            if not files:
+                return
+
             files = files[0] if len(files) == 1 else files
             caption = f"[Topic](https://t.me/c/{user.forum_id}/{chat.topic_id})"
             send_messages = await bot.send_file(user.forum_id, files, reply_to=user.files_topic_id, caption=caption)
             if isinstance(send_messages, Message):
                 send_messages = [send_messages]
 
-            for send_message, message_obj in zip(send_messages, messages_obj):
-                attachment = await client.db.add_attachment(bot_obj, send_message.id, send_message.file.media.id)
+            for send_message, message_obj, att_id in zip(send_messages, messages_obj, original_attachment_ids):
+                attachment = await client.db.add_attachment(bot_obj, send_message.id, send_message.file.media.id,
+                                                            att_id)
                 message_obj.attachment = attachment
                 await message_obj.save()
 

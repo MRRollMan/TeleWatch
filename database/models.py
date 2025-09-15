@@ -49,5 +49,6 @@ class Attachment(Model):
     bot: fields.ForeignKeyRelation[Bot] = fields.ForeignKeyField("models.Bot", related_name="attachments")
     topic_message_id = fields.IntField()
     file_id = fields.CharField(max_length=255, required=True)
+    original_file_id = fields.CharField(max_length=255, required=False, null=True)
 
     messages: fields.ReverseRelation["Message"]
