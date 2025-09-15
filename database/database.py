@@ -29,10 +29,16 @@ class Database:
         await Tortoise.init(
             config=CONFIG
         )
-
-        # Generate the schema
-        await Tortoise.generate_schemas()
+        await Database.run_migrations()
         logging.info("Database initialized successfully")
+
+    @staticmethod
+    async def run_migrations():
+        from aerich import Command
+        logging.info("Running database migrations...")
+        command = Command(tortoise_config=CONFIG, app='models')
+        await command.init()
+        await command.upgrade()
 
     @staticmethod
     async def close():
@@ -125,17 +131,27 @@ class Database:
         return await Bot.get_or_none(bot_id=bot_id)
 
     @staticmethod
-    async def add_attachment(bot_id: int, topic_message_id: int, file_id: str):
-        return (await Attachment.get_or_create(
+    async def add_attachment(bot_id: int, topic_message_id: int, file_id: str,
+                             original_file_id: str | None = None) -> Attachment:
+        return await Attachment.create(
             bot=bot_id,
             topic_message_id=topic_message_id,
-            file_id=file_id
-        ))[0]
+            file_id=file_id,
+            original_file_id=original_file_id
+        )
 
     @staticmethod
     async def get_attachment(bot_id: int, file_id: str, user: User) -> Attachment | None:
         return await Attachment.filter(
             bot=bot_id,
             file_id=file_id,
+            messages__user=user
+        ).first().prefetch_related("bot", "messages")
+
+    @staticmethod
+    async def get_attachment_by_original_id(bot_id: int, file_id: str, user: User) -> Attachment | None:
+        return await Attachment.filter(
+            bot=bot_id,
+            original_file_id=file_id,
             messages__user=user
         ).first().prefetch_related("bot", "messages")
