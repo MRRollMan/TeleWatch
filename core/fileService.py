@@ -15,6 +15,9 @@ class FileService:
         file = BytesIO(await client.download_media(message, file=bytes))
         file.name = FileService.get_filename(message)
 
+        if not file.getvalue():
+            raise ValueError("Message contains expired media.")
+
         return file
 
     @staticmethod
